@@ -1,0 +1,27 @@
+# NOTE: This project is built and documented primarily for VERCEL deployment
+# (see README.md) because the /api/*.js serverless functions use Vercel's
+# specific auto-detected convention. If you deploy the STATIC pages
+# (index.html / login.html / dashboard.html) to Netlify instead, they will
+# work fine, but the AI Advisor, Save Scenario, and habit-tracking features
+# (which call /api/advisor, /api/scenarios, /api/habits) will 404 here unless
+# you port those three files into netlify/functions/ using Netlify's
+# handler signature (exports.handler = async (event) => {...}) and update
+# the fetch() paths in dashboard.html from /api/... to
+# /.netlify/functions/.... This file is kept for convenience / as a fallback
+# static-only host — it is not required for the Vercel deployment path.
+
+[build]
+  publish = "."
+  command = ""
+
+[[redirects]]
+  from = "/"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"

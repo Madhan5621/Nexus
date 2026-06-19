@@ -1,0 +1,42 @@
+# ── Dependencies ──
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# ── Environment / secrets ──
+# CLAUDE_API_KEY, SUPABASE_URL, and SUPABASE_SERVICE_ROLE_KEY must NEVER be
+# committed. Set them in the Vercel dashboard (Project → Settings →
+# Environment Variables) instead. .env.example is intentionally NOT ignored
+# so collaborators know which variables to set.
+.env
+.env.local
+.env.*.local
+
+# ── OS files ──
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Editor / IDE ──
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ── Build / deploy output (future-proofing) ──
+dist/
+build/
+.cache/
+.parcel-cache/
+
+# ── Netlify / Vercel / Supabase local state ──
+.netlify/
+.vercel/
+.supabase/
+
+# ── Logs ──
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
