@@ -1,16 +1,18 @@
 {
-  "name": "nexus-life-trajectory-simulator",
-  "version": "1.1.0",
-  "description": "NEXUS — Life Trajectory Simulator. A futuristic life/financial trajectory simulator with vanilla HTML/CSS/JS frontend and Vercel serverless functions (Claude AI Advisor + optional Supabase persistence).",
-  "private": true,
-  "type": "module",
+  "name": "nexus-auth-backend",
+  "version": "1.0.0",
+  "description": "Node.js + Express/Vercel serverless backend for NEXUS login & registration, backed by Supabase.",
+  "main": "server.js",
   "scripts": {
-    "dev": "npx --yes serve . -l 5173",
-    "start": "npx --yes serve . -l 5173",
-    "vercel-dev": "npx --yes vercel dev"
+    "start": "node server.js",
+    "dev": "node server.js"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.45.4"
-  },
-  "license": "UNLICENSED"
+    "@supabase/supabase-js": "^2.45.4",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2"
+  }
 }

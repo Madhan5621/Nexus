@@ -836,13 +836,21 @@
             <!-- Form -->
             <form class="login-form" id="login-form" autocomplete="on">
 
+                <!-- Name (sign-up only) -->
+                <div class="field-group" id="name-group" style="display:none;">
+                    <div class="field-label">
+                        <span class="label-icon">★</span> Agent Name
+                    </div>
+                    <input class="field-input" type="text" id="name" placeholder="Your full name" autocomplete="name">
+                </div>
+
                 <!-- Email -->
                 <div class="field-group">
                     <div class="field-label">
                         <span class="label-icon">▸</span> Email Address
                     </div>
                     <input class="field-input" type="email" id="email" placeholder="agent@nexus.sim"
-                        value="demo@nexus.sim" required autofocus>
+                        required autofocus>
                 </div>
 
                 <!-- Password -->
@@ -853,19 +861,19 @@
                         </div>
                         <button type="button" class="forgot-link" id="forgot-btn">Forgot?</button>
                     </div>
-                    <input class="field-input" type="password" id="password" placeholder="••••••••" value="password123"
+                    <input class="field-input" type="password" id="password" placeholder="••••••••"
                         required>
                 </div>
 
                 <!-- Remember + Actions -->
-                <div class="checkbox-row">
+                <div class="checkbox-row" id="remember-row">
                     <input type="checkbox" id="remember" checked>
                     <label for="remember">Remember this device</label>
                 </div>
 
                 <!-- Submit -->
                 <button type="submit" class="cta-btn" id="login-btn">
-                    <span class="btn-icon">⚡</span> Access Nexus
+                    <span class="btn-icon">⚡</span> <span id="login-btn-text">Access Nexus</span>
                 </button>
 
             </form>
@@ -878,7 +886,7 @@
             </div>
 
             <!-- Sign Up -->
-            <div class="signup-row">
+            <div class="signup-row" id="signup-row">
                 <span>New to Nexus?</span>
                 <button class="signup-link" id="signup-btn">Create Account →</button>
             </div>
@@ -891,8 +899,8 @@
             </div>
 
             <!-- Hint -->
-            <div class="hint">
-                <kbd>demo@nexus.sim</kbd> / <kbd>password123</kbd> · press <kbd>↵</kbd> to login
+            <div class="hint" id="form-hint">
+                Don't have an account? Create one — press <kbd>↵</kbd> to login
             </div>
 
         </div>
@@ -1015,96 +1023,178 @@
             t._hide = setTimeout(() => t.classList.remove('show'), 3200);
         }
 
-        // ── LOGIN LOGIC ──
+        // ── AUTH LOGIC (real backend: Express + Supabase) ──
         const form = document.getElementById('login-form');
+        const nameGroup = document.getElementById('name-group');
+        const nameInput = document.getElementById('name');
         const emailInput = document.getElementById('email');
         const passInput = document.getElementById('password');
         const loginBtn = document.getElementById('login-btn');
+        const loginBtnText = document.getElementById('login-btn-text');
         const forgotBtn = document.getElementById('forgot-btn');
         const signupBtn = document.getElementById('signup-btn');
         const backBtn = document.getElementById('back-btn');
+        const signupRow = document.getElementById('signup-row');
+        const formHint = document.getElementById('form-hint');
 
-        // Demo credentials
-        const DEMO_EMAIL = 'demo@nexus.sim';
-        const DEMO_PASS = 'password123';
+        // Same-origin API base (works once deployed on Vercel, or via `npm run dev` locally)
+        const API_BASE = window.location.origin;
 
-        function doLogin(email, pass) {
-            // Show loading state
-            const originalText = loginBtn.innerHTML;
-            loginBtn.innerHTML = '<span class="spinner"></span> Authenticating…';
-            loginBtn.disabled = true;
+        let mode = 'login'; // 'login' | 'signup'
 
-            setTimeout(() => {
-                loginBtn.innerHTML = originalText;
-                loginBtn.disabled = false;
+        function setMode(next) {
+            mode = next;
+            if (mode === 'signup') {
+                nameGroup.style.display = '';
+                nameInput.required = true;
+                loginBtnText.textContent = 'Create Account';
+                signupRow.innerHTML = '<span>Already registered?</span>';
+                const switchBtn = document.createElement('button');
+                switchBtn.className = 'signup-link';
+                switchBtn.id = 'signup-btn';
+                switchBtn.textContent = 'Log In →';
+                signupRow.appendChild(switchBtn);
+                switchBtn.addEventListener('click', () => setMode('login'));
+                formHint.textContent = 'Fill in your name, email & password, then press ↵';
+            } else {
+                nameGroup.style.display = 'none';
+                nameInput.required = false;
+                loginBtnText.textContent = 'Access Nexus';
+                signupRow.innerHTML = '<span>New to Nexus?</span>';
+                const switchBtn = document.createElement('button');
+                switchBtn.className = 'signup-link';
+                switchBtn.id = 'signup-btn';
+                switchBtn.textContent = 'Create Account →';
+                signupRow.appendChild(switchBtn);
+                switchBtn.addEventListener('click', () => setMode('signup'));
+                formHint.textContent = "Don't have an account? Create one — press ↵ to login";
+            }
+        }
 
-                if (email === DEMO_EMAIL && pass === DEMO_PASS) {
-                    showToast('✓ Welcome back, Agent. Redirecting…', 'green');
-                    // Redirect to main simulator after a moment
-                    setTimeout(() => {
-                        window.location.href = 'dashboard.html';
-                    }, 1200);
-                } else {
-                    showToast('✗ Invalid credentials. Try demo@nexus.sim / password123', 'orange');
-                    // Shake the form
-                    const panel = document.querySelector('.glass-panel');
-                    panel.classList.add('shake');
-                    setTimeout(() => panel.classList.remove('shake'), 500);
-                    // Reset fields if wrong
-                    if (email !== DEMO_EMAIL) emailInput.style.borderColor = 'var(--red)';
-                    if (pass !== DEMO_PASS) passInput.style.borderColor = 'var(--red)';
+        // Initial binding for the sign-up button rendered in the HTML
+        signupBtn.addEventListener('click', () => setMode('signup'));
+
+        function setLoading(isLoading) {
+            loginBtn.disabled = isLoading;
+            loginBtn.style.opacity = isLoading ? '0.7' : '1';
+            if (isLoading) {
+                loginBtn._prevText = loginBtnText.textContent;
+                loginBtnText.innerHTML = '<span class="spinner"></span> ' +
+                    (mode === 'signup' ? 'Creating account…' : 'Authenticating…');
+            } else {
+                loginBtnText.textContent = loginBtn._prevText || (mode === 'signup' ? 'Create Account' : 'Access Nexus');
+            }
+        }
+
+        function shakeForm() {
+            const panel = document.querySelector('.glass-panel');
+            panel.classList.add('shake');
+            setTimeout(() => panel.classList.remove('shake'), 500);
+        }
+
+        async function doSignup(name, email, pass) {
+            setLoading(true);
+            try {
+                const resp = await fetch(`${API_BASE}/api/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password: pass })
+                });
+                const data = await resp.json();
+                setLoading(false);
+
+                if (!resp.ok) {
+                    showToast('✗ ' + (data.error || 'Could not create account.'), 'orange');
+                    shakeForm();
+                    return;
+                }
+
+                showToast('✓ Account created! Logging you in…', 'green');
+                // Immediately log the new user in so the session is established
+                await doLogin(email, pass, true);
+            } catch (err) {
+                setLoading(false);
+                showToast('✗ Network error — is the server running?', 'orange');
+                shakeForm();
+            }
+        }
+
+        async function doLogin(email, pass, skipLoadingToggle) {
+            if (!skipLoadingToggle) setLoading(true);
+            try {
+                const resp = await fetch(`${API_BASE}/api/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password: pass })
+                });
+                const data = await resp.json();
+                if (!skipLoadingToggle) setLoading(false);
+
+                if (!resp.ok) {
+                    showToast('✗ ' + (data.error || 'Invalid credentials.'), 'orange');
+                    shakeForm();
+                    emailInput.style.borderColor = 'var(--red)';
+                    passInput.style.borderColor = 'var(--red)';
                     setTimeout(() => {
                         emailInput.style.borderColor = '';
                         passInput.style.borderColor = '';
                     }, 1200);
+                    return;
                 }
-            }, 1200);
+
+                // Persist session so the main simulator can show the real registered name
+                localStorage.setItem('nexus_token', data.token);
+                localStorage.setItem('nexus_user', JSON.stringify(data.user));
+
+                showToast(`✓ Welcome, ${data.user.name}. Redirecting…`, 'green');
+                setTimeout(() => {
+                    window.location.href = 'nexus-mobile-fixed.html';
+                }, 1100);
+            } catch (err) {
+                if (!skipLoadingToggle) setLoading(false);
+                showToast('✗ Network error — is the server running?', 'orange');
+                shakeForm();
+            }
         }
 
         form.addEventListener('submit', (e) => {
             e.preventDefault();
+            const name = nameInput.value.trim();
             const email = emailInput.value.trim();
             const pass = passInput.value.trim();
-            if (!email || !pass) {
-                showToast('⚠ Please fill in both fields.', 'orange');
-                return;
-            }
-            doLogin(email, pass);
-        });
 
-        // Quick login with demo credentials
-        function quickLogin() {
-            emailInput.value = DEMO_EMAIL;
-            passInput.value = DEMO_PASS;
-            doLogin(DEMO_EMAIL, DEMO_PASS);
-        }
+            if (mode === 'signup') {
+                if (!name || !email || !pass) {
+                    showToast('⚠ Please fill in name, email and password.', 'orange');
+                    return;
+                }
+                if (pass.length < 6) {
+                    showToast('⚠ Password must be at least 6 characters.', 'orange');
+                    return;
+                }
+                doSignup(name, email, pass);
+            } else {
+                if (!email || !pass) {
+                    showToast('⚠ Please fill in both fields.', 'orange');
+                    return;
+                }
+                doLogin(email, pass);
+            }
+        });
 
         // Forgot password
         forgotBtn.addEventListener('click', () => {
-            showToast('📧 Reset link sent to your registered email.', 'cyan');
-        });
-
-        // Sign up
-        signupBtn.addEventListener('click', () => {
-            showToast('🚀 Account creation — coming soon.', 'cyan');
+            showToast('📧 Password reset isn\'t wired up yet — contact support.', 'cyan');
         });
 
         // Back to simulator
         backBtn.addEventListener('click', () => {
-            window.location.href = 'dashboard.html';
+            window.location.href = 'nexus-mobile-fixed.html';
         });
 
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
-            // Ctrl+Enter or Cmd+Enter to quick login
-            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-                e.preventDefault();
-                quickLogin();
-            }
-            // Escape to go back
-            if (e.key === 'Escape') {
-                backBtn.click();
-            }
+            if (e.key === 'Escape') backBtn.click();
         });
 
         // Auto-focus on load
@@ -1112,15 +1202,8 @@
             setTimeout(() => emailInput.focus(), 400);
         });
 
-        // Pre-fill demo on click of hint
-        document.querySelector('.hint kbd:first-child')?.addEventListener('click', () => {
-            emailInput.value = DEMO_EMAIL;
-            passInput.value = DEMO_PASS;
-            showToast('✓ Demo credentials filled.', 'cyan');
-        });
-
-        console.log('🔐 NEXUS Login · Demo: demo@nexus.sim / password123');
-        console.log('⌨️  Press Ctrl+Enter to login instantly.');
+        setMode('login');
+        console.log('🔐 NEXUS Login · real auth via /api/login and /api/register');
     </script>
 
 </body>

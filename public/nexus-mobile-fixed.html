@@ -427,17 +427,6 @@
       box-shadow: 0 0 20px rgba(0, 212, 255, 0.2);
     }
 
-    .hdr-save {
-      color: var(--purple);
-      border-color: rgba(176, 110, 255, 0.3);
-      background: rgba(176, 110, 255, 0.06);
-    }
-
-    .hdr-save:hover {
-      background: rgba(176, 110, 255, 0.12);
-      box-shadow: 0 0 20px rgba(176, 110, 255, 0.2);
-    }
-
     /* ── SECTION LABEL ── */
     .section-label {
       display: flex;
@@ -1837,115 +1826,6 @@
       }
     }
 
-    /* ── AI ADVISOR (Claude-powered) ── */
-    .advisor-panel {
-      margin-top: 20px;
-      padding-top: 20px;
-      border-top: 1px solid rgba(255, 255, 255, 0.06);
-    }
-
-    .advisor-row {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .advisor-input {
-      flex: 1 1 260px;
-      background: rgba(8, 20, 45, 0.55);
-      border: 1px solid var(--glass-border);
-      border-radius: var(--radius-xs);
-      color: var(--text);
-      font-family: 'Sora', sans-serif;
-      font-size: 13px;
-      padding: 10px 14px;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-
-    .advisor-input:focus {
-      border-color: var(--glass-border-hover);
-    }
-
-    .advisor-ask-btn {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 10px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      padding: 0 18px;
-      border-radius: var(--radius-xs);
-      cursor: pointer;
-      border: 1px solid rgba(176, 110, 255, 0.35);
-      color: var(--purple);
-      background: rgba(176, 110, 255, 0.08);
-      transition: all 0.25s;
-      white-space: nowrap;
-    }
-
-    .advisor-ask-btn:hover:not(:disabled) {
-      background: rgba(176, 110, 255, 0.16);
-      box-shadow: 0 0 20px rgba(176, 110, 255, 0.25);
-    }
-
-    .advisor-ask-btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .advisor-chips {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-top: 10px;
-    }
-
-    .advisor-chip {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 10px;
-      letter-spacing: 0.5px;
-      padding: 5px 10px;
-      border-radius: var(--radius-xs);
-      border: 1px solid var(--glass-border);
-      color: var(--text-secondary);
-      cursor: pointer;
-      background: rgba(255, 255, 255, 0.02);
-      transition: all 0.2s;
-    }
-
-    .advisor-chip:hover {
-      border-color: var(--glass-border-hover);
-      color: var(--text);
-    }
-
-    .advisor-reply {
-      margin-top: 14px;
-      padding: 16px 18px;
-      border-radius: var(--radius-sm);
-      border-left: 3px solid var(--purple);
-      background: rgba(176, 110, 255, 0.06);
-      font-size: 13px;
-      line-height: 1.6;
-      color: var(--text-secondary);
-      display: none;
-      white-space: pre-wrap;
-    }
-
-    .advisor-reply.show {
-      display: block;
-    }
-
-    .advisor-reply.loading {
-      display: block;
-      color: var(--text-muted);
-      font-style: italic;
-    }
-
-    .advisor-reply.error {
-      border-left-color: var(--red);
-      background: rgba(255, 34, 68, 0.06);
-      color: var(--orange);
-    }
-
     .insight-card {
       padding: 16px;
       border-radius: var(--radius-sm);
@@ -3232,6 +3112,8 @@
       <div class="nav-link" onclick="scrollToSection('section-disruption')">Scenarios</div>
     </div>
     <div class="nav-right">
+      <span id="nav-user-info" style="display:none;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;color:var(--text-secondary,#9fb4c9);margin-right:10px;"></span>
+      <button class="nav-export-btn" id="nav-auth-btn" onclick="window.location.href='login.html'">⚿ Log In</button>
       <button class="nav-export-btn" onclick="exportPDF()">⬇ Export PDF</button>
       <button class="nav-share-btn" onclick="shareResults()">⎋ Share</button>
     </div>
@@ -3334,7 +3216,6 @@
         <div class="header-actions">
           <button class="hdr-btn hdr-export" onclick="exportPDF()">⬇ Export PDF</button>
           <button class="hdr-btn hdr-share" onclick="shareResults()">⎋ Share Results</button>
-          <button class="hdr-btn hdr-save" onclick="saveScenario()">💾 Save Scenario</button>
         </div>
       </div>
     </div>
@@ -3791,20 +3672,6 @@
           </div>
           <div class="insights-body">
             <div class="insights-grid" id="insights-grid"></div>
-            <div class="advisor-panel">
-              <div class="insights-sub" style="margin-bottom:10px">Ask the AI Advisor — powered by Claude, answers using your actual simulation numbers</div>
-              <div class="advisor-row">
-                <input id="advisor-input" class="advisor-input" type="text" placeholder="e.g. What's the single biggest lever I can pull right now?" onkeydown="if(event.key==='Enter')askAdvisor()" />
-                <button class="advisor-ask-btn" id="advisor-btn" onclick="askAdvisor()">✦ Ask Advisor</button>
-              </div>
-              <div class="advisor-chips">
-                <span class="advisor-chip" onclick="askAdvisor('What is the single biggest lever I can pull to improve my trajectory?')">Biggest lever?</span>
-                <span class="advisor-chip" onclick="askAdvisor('How risky is my current career path given automation trends?')">Career risk?</span>
-                <span class="advisor-chip" onclick="askAdvisor('Am I saving enough to retire at my target age?')">Retirement on track?</span>
-                <span class="advisor-chip" onclick="askAdvisor('How is inflation in my country affecting my real wealth?')">Inflation impact?</span>
-              </div>
-              <div class="advisor-reply" id="advisor-reply"></div>
-            </div>
           </div>
         </div>
       </div>
@@ -4014,6 +3881,50 @@
     let CURRENCY_MODE = 'local';
     let currentCountryCode = 'US';
 
+    /* ── SESSION / REGISTERED USER ──
+       Reads the logged-in user saved by login.html after a successful
+       /api/login call, and uses their real name everywhere the page
+       previously hardcoded "AGENT_25". */
+    let CURRENT_USER = null;
+    (function () {
+      try {
+        const raw = localStorage.getItem('nexus_user');
+        const token = localStorage.getItem('nexus_token');
+        if (raw && token) {
+          CURRENT_USER = JSON.parse(raw);
+        }
+      } catch (e) {
+        CURRENT_USER = null;
+      }
+
+      const nameEl = document.getElementById('av-name');
+      if (CURRENT_USER && CURRENT_USER.name && nameEl) {
+        nameEl.textContent = CURRENT_USER.name.toUpperCase();
+      }
+
+      const navUserInfo = document.getElementById('nav-user-info');
+      const navAuthBtn = document.getElementById('nav-auth-btn');
+      if (CURRENT_USER && CURRENT_USER.name) {
+        if (navUserInfo) {
+          navUserInfo.textContent = '◉ ' + CURRENT_USER.name;
+          navUserInfo.style.display = '';
+        }
+        if (navAuthBtn) {
+          navAuthBtn.textContent = '⏻ Log Out';
+          navAuthBtn.onclick = logoutUser;
+        }
+      }
+      // If nobody is logged in, the page still works — it just keeps
+      // showing the default AGENT_25 placeholder and a "Log In" button
+      // until someone logs in.
+    })();
+
+    function logoutUser() {
+      localStorage.removeItem('nexus_token');
+      localStorage.removeItem('nexus_user');
+      window.location.href = 'login.html';
+    }
+
     /* cursor effect removed */
 
     /* ── SCROLL EFFECTS ── */
@@ -4067,44 +3978,6 @@
       } catch (e) {
         const ta = document.createElement('textarea'); ta.value = url; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
         showToast('✓ Link copied to clipboard!', 'green');
-      }
-    }
-
-    /* ── SAVE SCENARIO (calls /api/scenarios — optional Supabase persistence, see api/scenarios.js) ──
-       Falls back to a clear toast if the backend isn't configured; never breaks the simulator itself. */
-    function getOwnerId() {
-      let id = localStorage.getItem('nexus_owner_id');
-      if (!id) {
-        id = 'anon-' + (crypto.randomUUID ? crypto.randomUUID() : (Date.now() + '-' + Math.random().toString(36).slice(2)));
-        localStorage.setItem('nexus_owner_id', id);
-      }
-      return id;
-    }
-
-    async function saveScenario() {
-      const d = window.SIM;
-      if (!d) { showToast('⚠ Run a simulation first before saving.', 'orange'); return; }
-      const name = prompt('Name this scenario:', `${d.career} · Age ${d.age} · ${currentCountryCode}`);
-      if (name === null) return; // cancelled
-
-      try {
-        const res = await fetch('/api/scenarios', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            ownerId: getOwnerId(),
-            name: name || 'Untitled scenario',
-            payload: { country: currentCountryCode, sim: d },
-          }),
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          showToast('⚠ ' + (data.error || 'Could not save scenario.'), 'orange');
-          return;
-        }
-        showToast('✓ Scenario saved!', 'green');
-      } catch (e) {
-        showToast('⚠ Could not reach the server to save this scenario.', 'orange');
       }
     }
 
@@ -4600,51 +4473,6 @@
       setTimeout(() => document.querySelectorAll('.insight-card').forEach(el => el.classList.add('show')), 100);
     }
 
-    /* ── AI ADVISOR (calls /api/advisor — Claude proxy, see api/advisor.js) ── */
-    async function askAdvisor(presetQuestion) {
-      const btn = document.getElementById('advisor-btn');
-      const input = document.getElementById('advisor-input');
-      const reply = document.getElementById('advisor-reply');
-      const question = (presetQuestion || input.value || '').trim();
-
-      if (!window.SIM) {
-        showToast('⚠ Run a simulation first before asking the AI Advisor.', 'orange');
-        return;
-      }
-      if (!question) {
-        showToast('⚠ Type a question or pick a quick-ask chip.', 'orange');
-        return;
-      }
-
-      if (presetQuestion) input.value = presetQuestion;
-      btn.disabled = true;
-      reply.className = 'advisor-reply show loading';
-      reply.textContent = 'NEXUS AI Advisor is thinking…';
-
-      try {
-        const res = await fetch('/api/advisor', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ simulation: window.SIM, question }),
-        });
-        const data = await res.json();
-
-        if (!res.ok) {
-          reply.className = 'advisor-reply show error';
-          reply.textContent = '⚠ ' + (data.error || 'The AI Advisor is not available right now.');
-          return;
-        }
-
-        reply.className = 'advisor-reply show';
-        reply.textContent = data.reply || 'No response generated.';
-      } catch (err) {
-        reply.className = 'advisor-reply show error';
-        reply.textContent = '⚠ Could not reach the AI Advisor. Check your connection and try again.';
-      } finally {
-        btn.disabled = false;
-      }
-    }
-
     /* ── NET WORTH & RETIREMENT ── */
     function renderNetWorth(d) {
       const N = d.YEARS, e = d.econ;
@@ -4747,7 +4575,7 @@
       window.updateAvatarFromSim = function (data) {
         const age = data.age || 25, income = data.income || 45000, learn = data.learn || 1, screen = data.screen || 6, career = data.career || 'tech'; const e = data.econ || ECON;
         const cN = { tech: 'Technology', business: 'Business', creative: 'Creative Arts', health: 'Healthcare', finance: 'Finance' };
-        document.getElementById('av-name').textContent = 'AGENT_' + age; document.getElementById('av-career-label').textContent = (cN[career] || 'Technology') + ' · ' + e.name; document.getElementById('avs-age').textContent = age; document.getElementById('avs-income').textContent = fmt(income); document.getElementById('avs-learn').textContent = learn + 'h/day'; document.getElementById('avs-screen').textContent = screen + 'h/day';
+        document.getElementById('av-name').textContent = (CURRENT_USER && CURRENT_USER.name) ? CURRENT_USER.name.toUpperCase() : ('AGENT_' + age); document.getElementById('av-career-label').textContent = (cN[career] || 'Technology') + ' · ' + e.name; document.getElementById('avs-age').textContent = age; document.getElementById('avs-income').textContent = fmt(income); document.getElementById('avs-learn').textContent = learn + 'h/day'; document.getElementById('avs-screen').textContent = screen + 'h/day';
         const skillPct = Math.min(99, Math.round(20 + learn * 6 + data.fitness * 3)); const healthPct = Math.min(99, Math.round(60 + data.fitness * 10 + data.sleep * 5 - screen * 2 + e.hdi * 10)); const growthDir = learn >= 2 ? '↑↑' : learn >= 1 ? '↑' : '→';
         document.getElementById('tag-skill').textContent = 'SKILL · ' + skillPct + '%'; document.getElementById('tag-health').textContent = 'HEALTH · ' + healthPct + '%'; document.getElementById('tag-growth').textContent = e.flag + ' · ' + growthDir;
         pt2.color.setHex(data.riskLevel === 'green' ? 0x00ffaa : data.riskLevel === 'orange' ? 0xff7043 : 0xff2244); group.scale.setScalar(0.9 + Math.min(age - 16, 40) / 40 * 0.2);

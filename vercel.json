@@ -1,12 +1,6 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": null,
-  "outputDirectory": ".",
-  "cleanUrls": false,
-  "trailingSlash": false,
-  "functions": {
-    "api/*.js": {
-      "maxDuration": 10
-    }
-  }
+  "version": 2,
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/$1" }
+  ]
 }
