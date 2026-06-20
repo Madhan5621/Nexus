@@ -5,15 +5,13 @@
   ],
   "routes": [
     {
-      "handle": "filesystem"
+      "src": "/",
+      "status": 302,
+      "headers": { "Location": "/public/effect.html" }
     },
     {
       "src": "/api/(.*)",
       "dest": "/api/$1"
-    },
-    {
-      "src": "/",
-      "dest": "/public/effect.html"
     },
     {
       "src": "/(.*)",
