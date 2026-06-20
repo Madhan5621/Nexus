@@ -12,3 +12,9 @@ create table if not exists users (
 
 -- Speeds up login lookups by email
 create index if not exists idx_users_email on users (lower(email));
+
+-- Lock the table down: only server-side code using the service_role key
+-- (which is what api/login.js and api/register.js use) can read/write it.
+-- service_role always bypasses RLS, so this doesn't affect your app —
+-- it just blocks the public anon key from ever touching this table directly.
+alter table users enable row level security;
