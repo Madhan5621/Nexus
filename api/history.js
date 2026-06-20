@@ -1,6 +1,19 @@
 const jwt = require('jsonwebtoken');
 const supabase = require('./_supabase');
 
+// Helper: parse JSON body for Vercel serverless
+async function parseBody(req) {
+  if (req.body && typeof req.body === 'object') return req.body;
+  return new Promise((resolve) => {
+    let raw = '';
+    req.on('data', chunk => { raw += chunk; });
+    req.on('end', () => {
+      try { resolve(JSON.parse(raw)); } catch { resolve({}); }
+    });
+    req.on('error', () => resolve({}));
+  });
+}
+
 function verifyToken(req) {
   const auth = req.headers['authorization'] || '';
   const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
@@ -17,12 +30,12 @@ module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   const user = verifyToken(req);
   if (!user) return res.status(401).json({ error: 'Unauthorized. Please log in.' });
 
-  // GET /api/history — fetch last 50 simulations for logged-in user
   if (req.method === 'GET') {
     const { data, error } = await supabase
       .from('simulation_history')
@@ -32,15 +45,14 @@ module.exports = async (req, res) => {
       .limit(50);
 
     if (error) {
-      console.error(error);
+      console.error('[history GET]', error);
       return res.status(500).json({ error: 'Could not fetch history.' });
     }
     return res.status(200).json({ history: data });
   }
 
-  // POST /api/history — save a simulation snapshot
   if (req.method === 'POST') {
-    const { country_code, country_name, snapshot, notes } = req.body || {};
+    const { country_code, country_name, snapshot, notes } = await parseBody(req);
     if (!country_code || !snapshot) {
       return res.status(400).json({ error: 'country_code and snapshot are required.' });
     }
@@ -58,25 +70,24 @@ module.exports = async (req, res) => {
       .single();
 
     if (error) {
-      console.error(error);
+      console.error('[history POST]', error);
       return res.status(500).json({ error: 'Could not save simulation.' });
     }
     return res.status(201).json({ message: 'Simulation saved.', id: data.id, created_at: data.created_at });
   }
 
-  // DELETE /api/history?id=<uuid> — delete one entry
   if (req.method === 'DELETE') {
-    const id = (req.query || {}).id;
+    const id = (req.query || new URLSearchParams(req.url.split('?')[1] || '')).get('id');
     if (!id) return res.status(400).json({ error: 'id query param required.' });
 
     const { error } = await supabase
       .from('simulation_history')
       .delete()
       .eq('id', id)
-      .eq('user_id', user.sub); // users can only delete their own rows
+      .eq('user_id', user.sub);
 
     if (error) {
-      console.error(error);
+      console.error('[history DELETE]', error);
       return res.status(500).json({ error: 'Could not delete entry.' });
     }
     return res.status(200).json({ message: 'Deleted.' });

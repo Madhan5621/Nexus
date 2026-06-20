@@ -1,16 +1,10 @@
 {
   "version": 2,
-  "builds": [
-    { "src": "api/*.js", "use": "@vercel/node" },
-    { "src": "public/**", "use": "@vercel/static" }
-  ],
-  "routes": [
-    { "src": "/api/(.*)", "dest": "/api/$1" },
-    { "src": "/", "dest": "/public/effect.html" },
-    { "src": "/effect", "dest": "/public/effect.html" },
-    { "src": "/login", "dest": "/public/login.html" },
-    { "src": "/app", "dest": "/public/nexus-mobile-fixed.html" },
-    { "src": "/(.*)\\.html", "dest": "/public/$1.html" },
-    { "src": "/(.*)", "dest": "/public/$1" }
+  "rewrites": [
+    { "source": "/",                    "destination": "/public/effect.html" },
+    { "source": "/effect",              "destination": "/public/effect.html" },
+    { "source": "/login",               "destination": "/public/login.html" },
+    { "source": "/app",                 "destination": "/public/nexus-mobile-fixed.html" },
+    { "source": "/:file([^.]+\\.html)", "destination": "/public/:file" }
   ]
 }
