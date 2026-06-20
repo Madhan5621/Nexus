@@ -2,6 +2,16 @@
 <html lang="en">
 
 <head>
+  <!-- AUTH GUARD: redirect to login if not authenticated -->
+  <script>
+    (function() {
+      var tok = localStorage.getItem('nexus_token');
+      var usr = localStorage.getItem('nexus_user');
+      if (!tok || !usr) {
+        window.location.replace('login.html');
+      }
+    })();
+  </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NEXUS — Advanced Life Trajectory Simulator v6.0</title>
@@ -3082,7 +3092,51 @@
       vertical-align: middle;
       margin-left: 6px;
     }
-  </style>
+  
+    /* ── SIMULATION HISTORY PANEL ── */
+    #history-panel {
+      position: fixed; inset: 0; z-index: 9999;
+      background: rgba(2,5,9,0.92); backdrop-filter: blur(12px);
+      display: none; flex-direction: column;
+      align-items: center; justify-content: flex-start;
+      padding: 24px 16px; overflow-y: auto;
+    }
+    #history-panel.open { display: flex; }
+    .hist-header {
+      width: 100%; max-width: 600px; display: flex;
+      align-items: center; justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .hist-title { font-family:'Orbitron',sans-serif; color:#00d4ff; font-size:1.1rem; }
+    .hist-close { background:none; border:1px solid rgba(0,212,255,.3);
+      color:#00d4ff; border-radius:8px; padding:6px 14px; cursor:pointer;
+      font-family:'Sora',sans-serif; }
+    .hist-close:hover { background:rgba(0,212,255,.1); }
+    .hist-empty { color:rgba(224,242,255,.4); font-size:.9rem; margin-top:40px; }
+    .hist-list { width:100%; max-width:600px; display:flex; flex-direction:column; gap:10px; }
+    .hist-card {
+      background:rgba(8,20,45,.8); border:1px solid rgba(0,212,255,.18);
+      border-radius:12px; padding:14px 16px; cursor:pointer;
+      transition:border-color .2s;
+    }
+    .hist-card:hover { border-color:rgba(0,212,255,.5); }
+    .hist-card-top { display:flex; justify-content:space-between; align-items:center; }
+    .hist-country { font-family:'Orbitron',sans-serif; color:#00d4ff; font-size:.85rem; }
+    .hist-date { color:rgba(224,242,255,.4); font-size:.75rem; }
+    .hist-delete { background:none; border:none; color:rgba(255,34,68,.6);
+      cursor:pointer; font-size:1rem; padding:0 4px; }
+    .hist-delete:hover { color:#ff2244; }
+    .hist-notes { color:rgba(224,242,255,.6); font-size:.8rem; margin-top:6px; }
+    .save-sim-btn {
+      background: linear-gradient(135deg,rgba(0,212,255,.15),rgba(0,255,170,.1));
+      border: 1px solid rgba(0,212,255,.4); color:#00d4ff;
+      border-radius:10px; padding:8px 16px; cursor:pointer;
+      font-family:'Sora',sans-serif; font-size:.85rem;
+      transition:all .2s; margin-left:8px;
+    }
+    .save-sim-btn:hover { background:rgba(0,212,255,.2); }
+
+</style>
 </head>
 
 <body>
@@ -3113,6 +3167,8 @@
     </div>
     <div class="nav-right">
       <span id="nav-user-info" style="display:none;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;color:var(--text-secondary,#9fb4c9);margin-right:10px;"></span>
+      <button class="nav-export-btn save-sim-btn" onclick="saveSimulation()" title="Save current simulation to history">💾 Save</button>
+      <button class="nav-export-btn" onclick="openHistoryPanel()" title="View simulation history">🕑 History</button>
       <button class="nav-export-btn" id="nav-auth-btn" onclick="window.location.href='login.html'">⚿ Log In</button>
       <button class="nav-export-btn" onclick="exportPDF()">⬇ Export PDF</button>
       <button class="nav-share-btn" onclick="shareResults()">⎋ Share</button>
@@ -4596,6 +4652,138 @@
     // Handle mobile orientation change separately — needs longer delay
     window.addEventListener('orientationchange', () => { clearTimeout(window._orientT); window._orientT = setTimeout(redrawCharts, 400); });
   </script>
+
+  <!-- SIMULATION HISTORY PANEL -->
+  <div id="history-panel">
+    <div class="hist-header">
+      <span class="hist-title">◎ SIMULATION HISTORY</span>
+      <button class="hist-close" onclick="closeHistoryPanel()">✕ CLOSE</button>
+    </div>
+    <div class="hist-list" id="hist-list">
+      <p class="hist-empty" id="hist-empty">Loading history…</p>
+    </div>
+  </div>
+
+  <script>
+  // ── SIMULATION HISTORY ──────────────────────────────────────
+  function getAuthHeaders() {
+    const tok = localStorage.getItem('nexus_token');
+    return tok ? { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok } : {};
+  }
+
+  async function saveSimulation() {
+    try {
+      const snap = {
+        country: typeof currentCountryCode !== 'undefined' ? currentCountryCode : 'US',
+        econ: typeof ECON !== 'undefined' ? ECON : {},
+        currency: typeof CURRENCY_MODE !== 'undefined' ? CURRENCY_MODE : 'local',
+        savedAt: new Date().toISOString()
+      };
+      const country_name = (typeof ECON !== 'undefined' && ECON.country) ? ECON.country : snap.country;
+      const resp = await fetch('/api/history', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          country_code: snap.country,
+          country_name: country_name,
+          snapshot: snap
+        })
+      });
+      const data = await resp.json();
+      if (resp.ok) {
+        showNexusToast('✓ Simulation saved to history', 'green');
+      } else {
+        showNexusToast('✗ ' + (data.error || 'Could not save'), 'orange');
+      }
+    } catch(e) {
+      showNexusToast('✗ Network error saving simulation', 'orange');
+    }
+  }
+
+  async function openHistoryPanel() {
+    document.getElementById('history-panel').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    const listEl = document.getElementById('hist-list');
+    const emptyEl = document.getElementById('hist-empty');
+    emptyEl.textContent = 'Loading…';
+    emptyEl.style.display = '';
+    // Clear old cards
+    Array.from(listEl.querySelectorAll('.hist-card')).forEach(c => c.remove());
+
+    try {
+      const resp = await fetch('/api/history', { headers: getAuthHeaders() });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || 'Failed');
+      const items = data.history || [];
+      if (items.length === 0) {
+        emptyEl.textContent = 'No saved simulations yet. Click "Save Simulation" on the main screen.';
+        return;
+      }
+      emptyEl.style.display = 'none';
+      items.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'hist-card';
+        const dt = new Date(item.created_at).toLocaleString();
+        card.innerHTML = `
+          <div class="hist-card-top">
+            <span class="hist-country">◈ ${item.country_name} (${item.country_code})</span>
+            <span>
+              <span class="hist-date">${dt}</span>
+              <button class="hist-delete" title="Delete" onclick="deleteHistoryItem('${item.id}', this)">🗑</button>
+            </span>
+          </div>
+          ${item.notes ? '<div class="hist-notes">' + item.notes + '</div>' : ''}
+        `;
+        listEl.appendChild(card);
+      });
+    } catch(e) {
+      emptyEl.textContent = 'Could not load history. Check your connection.';
+    }
+  }
+
+  function closeHistoryPanel() {
+    document.getElementById('history-panel').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  async function deleteHistoryItem(id, btn) {
+    if (!confirm('Delete this simulation from history?')) return;
+    try {
+      const resp = await fetch('/api/history?id=' + encodeURIComponent(id), {
+        method: 'DELETE', headers: getAuthHeaders()
+      });
+      if (resp.ok) {
+        btn.closest('.hist-card').remove();
+        showNexusToast('✓ Deleted', 'cyan');
+      } else {
+        showNexusToast('✗ Could not delete', 'orange');
+      }
+    } catch(e) {
+      showNexusToast('✗ Network error', 'orange');
+    }
+  }
+
+  // Generic toast — fallback if app's own toast fn isn't available
+  function showNexusToast(msg, color) {
+    if (typeof showToast === 'function') { showToast(msg, color); return; }
+    const t = document.createElement('div');
+    const colors = { green:'#00ffaa', cyan:'#00d4ff', orange:'#ff7043' };
+    t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);' +
+      'background:rgba(8,20,45,.95);border:1px solid ' + (colors[color]||'#00d4ff') + ';' +
+      'color:' + (colors[color]||'#00d4ff') + ';padding:10px 20px;border-radius:10px;' +
+      'z-index:99999;font-family:Sora,sans-serif;font-size:.85rem;pointer-events:none;' +
+      'transition:opacity .4s;';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }, 2500);
+  }
+
+  // Close panel on Escape
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeHistoryPanel();
+  });
+  </script>
+
 </body>
 
 </html>

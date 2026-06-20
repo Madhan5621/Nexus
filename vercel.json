@@ -1,21 +1,16 @@
 {
   "version": 2,
   "builds": [
-    { "src": "api/*.js", "use": "@vercel/node" }
+    { "src": "api/*.js", "use": "@vercel/node" },
+    { "src": "public/**", "use": "@vercel/static" }
   ],
   "routes": [
-    {
-      "src": "/",
-      "status": 302,
-      "headers": { "Location": "/public/effect.html" }
-    },
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/public/$1"
-    }
+    { "src": "/api/(.*)", "dest": "/api/$1" },
+    { "src": "/", "dest": "/public/effect.html" },
+    { "src": "/effect", "dest": "/public/effect.html" },
+    { "src": "/login", "dest": "/public/login.html" },
+    { "src": "/app", "dest": "/public/nexus-mobile-fixed.html" },
+    { "src": "/(.*)\\.html", "dest": "/public/$1.html" },
+    { "src": "/(.*)", "dest": "/public/$1" }
   ]
 }

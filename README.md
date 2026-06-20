@@ -1,115 +1,128 @@
-# NEXUS — Real Login & Registration (Node.js + Express + Supabase + Vercel)
+# NEXUS — Deployment Guide
 
-This replaces the old hardcoded `demo@nexus.sim / password123` login with a
-real account system. Anyone can now **create an account** with their own
-name, email and password, and the simulator's avatar card (previously
-hardcoded as `AGENT_25`) will show their **actual registered name**.
-
-## What changed
-
-- **`public/login.html`** — now has a working *Create Account* / *Log In*
-  toggle. It calls your backend (`/api/register`, `/api/login`) instead of
-  checking a hardcoded email/password.
-- **`public/nexus-mobile-fixed.html`** — on load, reads the logged-in user
-  from the browser session and replaces `AGENT_25` with their real name.
-  Also adds a small "Log In / Log Out" control to the top nav.
-- **`api/register.js`**, **`api/login.js`** — serverless functions (work on
-  Vercel as-is, and also locally via `server.js`) that talk to Supabase.
-- **`supabase-schema.sql`** — the one-time SQL to create the `users` table.
-
-Passwords are never stored in plain text — they're hashed with `bcrypt`
-before being saved.
+Deploy on **Vercel** (frontend + API) + **Supabase** (database). Both have generous free tiers.
 
 ---
 
-## 1. Set up Supabase (free)
+## Architecture
 
-1. Go to https://supabase.com → sign up / log in → **New Project** (free tier).
-2. Once it's created, open **SQL Editor** → **New query**, paste the contents
-   of `supabase-schema.sql`, and click **Run**. This creates the `users` table.
-3. Go to **Project Settings → API**. You'll need two values from here:
-   - **Project URL** → this is your `SUPABASE_URL`
-   - **`service_role` secret key** (NOT the `anon` key) → this is your
-     `SUPABASE_SERVICE_KEY`
+```
+User visits Vercel URL
+     │
+     ▼
+effect.html  ──(not logged in)──▶  login.html  ──(register/login)──▶  nexus-mobile-fixed.html
+     │                                                                          │
+     └──(already logged in)──────────────────────────────────────────────────▶ │
+                                                                      saves history to Supabase
+```
 
-   ⚠️ The service role key is powerful — never put it in frontend code or
-   commit it to a public repo. It only goes into your server's environment
-   variables.
+---
 
-## 2. Run it locally (optional, to test before deploying)
+## Step 1 — Supabase Setup
+
+1. Go to [supabase.com](https://supabase.com) → **New Project** (free tier)
+2. Wait for project to provision (~2 minutes)
+3. Open **SQL Editor** → **New Query** → paste the entire contents of `supabase-schema.sql` → click **Run**
+4. From **Project Settings → API**, copy:
+   - **Project URL** → looks like `https://abcdefgh.supabase.co`
+   - **service_role secret key** (not the anon key — the one labeled "secret")
+
+---
+
+## Step 2 — Vercel Setup
+
+1. Push this project to a GitHub repo (or use the Vercel CLI)
+2. Go to [vercel.com](https://vercel.com) → **Add New Project** → import your repo
+3. Vercel auto-detects the `vercel.json` — no framework setting needed
+4. **Before deploying**, go to **Project Settings → Environment Variables** and add:
+
+   | Name | Value |
+   |------|-------|
+   | `SUPABASE_URL` | Your Supabase Project URL |
+   | `SUPABASE_SERVICE_KEY` | Your Supabase service_role secret key |
+   | `JWT_SECRET` | Any long random string (e.g. 64 random chars) |
+
+5. Click **Deploy**
+
+---
+
+## Step 3 — Verify
+
+- Visit your Vercel URL → you should see the NEXUS entry animation
+- Click the enter button → you land on the login page
+- Register an account → you are taken to the simulator
+- Click **💾 Save** in the nav bar to save the current simulation
+- Click **🕑 History** to view saved simulations
+- Log out → revisiting `/nexus-mobile-fixed.html` directly redirects to login
+
+---
+
+## Local Development
 
 ```bash
-cd nexus-app
+# 1. Install dependencies
 npm install
+
+# 2. Create your local env file
 cp .env.example .env
+# Edit .env and fill in SUPABASE_URL, SUPABASE_SERVICE_KEY, JWT_SECRET
+
+# 3. Start server
+npm start
+# → http://localhost:3000
 ```
 
-Open `.env` and fill in:
+---
+
+## File Structure
+
 ```
-SUPABASE_URL=https://YOUR-PROJECT-REF.supabase.co
-SUPABASE_SERVICE_KEY=your-service-role-key-here
-JWT_SECRET=any-long-random-string
-```
-
-Then:
-```bash
-npm run dev
-```
-
-Visit `http://localhost:3000/login.html`, click **Create Account →**, fill
-in your name/email/password, submit. You'll be logged in and redirected to
-the simulator, which will now show your real name instead of `AGENT_25`.
-
-## 3. Deploy to Vercel (free)
-
-1. Push this `nexus-app` folder to a GitHub repo (or use the Vercel CLI
-   directly — see below).
-2. Go to https://vercel.com → **Add New → Project** → import that repo.
-3. In the import screen, open **Environment Variables** and add:
-   - `SUPABASE_URL`
-   - `SUPABASE_SERVICE_KEY`
-   - `JWT_SECRET`
-   (same values as your local `.env`)
-4. Click **Deploy**.
-
-Vercel will automatically detect the `api/` folder as serverless functions
-and serve everything in `public/` as static files — no extra config needed
-beyond the included `vercel.json`.
-
-**Alternative: deploy via CLI**
-```bash
-npm i -g vercel
-cd nexus-app
-vercel          # follow prompts, link/create project
-vercel env add SUPABASE_URL
-vercel env add SUPABASE_SERVICE_KEY
-vercel env add JWT_SECRET
-vercel --prod
+nexus/
+├── api/
+│   ├── _supabase.js       # Supabase client (reads env vars)
+│   ├── login.js           # POST /api/login
+│   ├── register.js        # POST /api/register
+│   └── history.js         # GET/POST/DELETE /api/history  ← NEW
+├── public/
+│   ├── effect.html        # Entry animation (auth-aware)
+│   ├── login.html         # Login + Register form
+│   ├── nexus-mobile-fixed.html  # Main simulator (auth-guarded)
+│   └── index.html         # Redirect shim
+├── supabase-schema.sql    # Run once in Supabase SQL editor
+├── vercel.json            # Routing config for Vercel
+├── server.js              # Local Express server
+├── package.json
+└── .env.example
 ```
 
-Once deployed, your live URLs will look like:
-- `https://your-project.vercel.app/login.html`
-- `https://your-project.vercel.app/nexus-mobile-fixed.html`
-- `https://your-project.vercel.app/effect.html`
+---
 
-## 4. How the name actually gets onto the main page
+## Bugs Fixed
 
-1. User signs up or logs in on `login.html`.
-2. On success, the backend returns `{ token, user: { id, name, email } }`.
-3. The frontend saves this in the browser via
-   `localStorage.setItem('nexus_user', JSON.stringify(user))`.
-4. `nexus-mobile-fixed.html` reads `nexus_user` on page load and sets the
-   avatar name (`#av-name`) to that person's real name — and keeps using it
-   every time the simulation re-renders, instead of resetting back to
-   `AGENT_25`.
+| # | Problem | Fix |
+|---|---------|-----|
+| 1 | `/` returns "Cannot GET /" | `vercel.json` now uses `@vercel/static` build for `/public/**` and routes `/` directly to `effect.html` |
+| 2 | Static files unreachable | Added proper static build config in `vercel.json` |
+| 3 | Anyone can access `/nexus-mobile-fixed.html` directly | Auth guard script at top of file — redirects to `login.html` if no token |
+| 4 | Login page accessible when already logged in | Auto-redirects to app if valid token already in localStorage |
+| 5 | Register didn't persist data | Bug was missing RLS policy on Supabase — service_role key bypasses RLS, schema now documents this clearly |
+| 6 | No simulation history | New `api/history.js` + `simulation_history` table + Save/History buttons in nav |
+| 7 | Back button on login went to app without auth | Button now checks token first |
 
-## Notes / things you may want to add later
+---
 
-- **Forgot password** is currently just a placeholder toast — wiring up real
-  password reset emails would need an email-sending service (e.g. Resend,
-  SendGrid) plus a reset-token flow.
-- **Sessions** here use a simple JWT stored in `localStorage`. This is fine
-  for a personal project/demo. For production-grade security you'd want
-  HttpOnly cookies and refresh-token rotation.
-- You can view/manage registered users any time in Supabase under
-  **Table Editor → users**.
+## Supabase Free Tier Limits
+
+- 500 MB database storage
+- 2 GB bandwidth/month
+- Unlimited API requests
+- Project pauses after **7 days of inactivity** on free tier — visit your Supabase dashboard monthly to keep it active, or upgrade to Pro ($25/mo)
+
+---
+
+## Security Notes
+
+- The `SUPABASE_SERVICE_KEY` must **never** appear in frontend code — it only lives in Vercel's environment variables and is used server-side in the `/api` functions
+- Passwords are hashed with bcrypt (cost factor 10) before storage — never stored in plain text
+- JWT tokens expire after 7 days
+- Row Level Security (RLS) is enabled on all tables so even if the anon key leaked, it can't read user data

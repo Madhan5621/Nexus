@@ -1187,9 +1187,14 @@
             showToast('📧 Password reset isn\'t wired up yet — contact support.', 'cyan');
         });
 
-        // Back to simulator
+        // Back to simulator (only if already logged in)
         backBtn.addEventListener('click', () => {
-            window.location.href = 'nexus-mobile-fixed.html';
+            const tok = localStorage.getItem('nexus_token');
+            if (tok) {
+                window.location.href = 'nexus-mobile-fixed.html';
+            } else {
+                window.location.href = 'effect.html';
+            }
         });
 
         // Keyboard shortcuts
@@ -1201,6 +1206,15 @@
         window.addEventListener('load', () => {
             setTimeout(() => emailInput.focus(), 400);
         });
+
+        // If already logged in, skip login page and go to app
+        (function() {
+            const tok = localStorage.getItem('nexus_token');
+            const usr = localStorage.getItem('nexus_user');
+            if (tok && usr) {
+                window.location.replace('nexus-mobile-fixed.html');
+            }
+        })();
 
         setMode('login');
         console.log('🔐 NEXUS Login · real auth via /api/login and /api/register');

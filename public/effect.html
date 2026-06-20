@@ -1103,7 +1103,14 @@
                 setTimeout(() => { flash.style.opacity = '1'; }, 400);
 
                 setTimeout(() => {
-                    window.location.href = 'login.html';
+                    // If already logged in, skip login and go straight to the app
+                    const _tok = localStorage.getItem('nexus_token');
+                    const _usr = localStorage.getItem('nexus_user');
+                    if (_tok && _usr) {
+                        window.location.href = 'nexus-mobile-fixed.html';
+                    } else {
+                        window.location.href = 'login.html';
+                    }
                 }, 800);
             }
 
@@ -1125,6 +1132,21 @@
                     btn.style.animation = 'pulse-glow 1s ease-in-out 3';
                 }
             }, 8000);
+
+            // If user is already logged in, update the enter button label
+            (function() {
+                try {
+                    const tok = localStorage.getItem('nexus_token');
+                    const usr = localStorage.getItem('nexus_user');
+                    if (tok && usr) {
+                        const parsed = JSON.parse(usr);
+                        const enterBtn = document.getElementById('enter-btn');
+                        if (enterBtn && parsed && parsed.name) {
+                            enterBtn.innerHTML = '⚡ CONTINUE AS ' + parsed.name.toUpperCase();
+                        }
+                    }
+                } catch(e) {}
+            })();
 
             // Expose for debugging
             window.__nexus = { enter: enterNexus, progress: () => progress };
