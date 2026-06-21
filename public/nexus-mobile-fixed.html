@@ -850,6 +850,18 @@
       background: rgba(0, 20, 40, 0.5);
     }
 
+    .field-input.field-error {
+      border-color: rgba(255, 64, 64, 0.7);
+      box-shadow: 0 0 0 3px rgba(255, 64, 64, 0.12), 0 0 16px rgba(255, 64, 64, 0.15);
+      animation: field-shake 0.3s;
+    }
+
+    @keyframes field-shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-4px); }
+      75% { transform: translateX(4px); }
+    }
+
     select.field-input option {
       background: #040c18;
     }
@@ -2830,19 +2842,25 @@
       .grid-overlay,
       .grain,
       .cta-btn,
-      #sim-overlay {
+      #sim-overlay,
+      #history-panel,
+      .toast {
         display: none !important;
       }
 
-      body {
-        background: white;
-        color: #111;
+      html, body {
+        background: white !important;
+        color: #111 !important;
+        height: auto !important;
+        overflow: visible !important;
       }
 
       .glass-panel {
         background: white;
         border: 1px solid #eee;
         box-shadow: none;
+        break-inside: avoid;
+        page-break-inside: avoid;
       }
 
       #app {
@@ -2856,6 +2874,21 @@
         -webkit-text-fill-color: unset;
         background: none;
         color: #111;
+      }
+
+      .chart-canvas-wrap,
+      .chart-panel,
+      canvas {
+        background: white !important;
+        break-inside: avoid;
+        page-break-inside: avoid;
+        visibility: visible !important;
+        opacity: 1 !important;
+      }
+
+      section, .results-section, .method-card {
+        break-inside: avoid;
+        page-break-inside: avoid;
       }
     }
 
@@ -3338,8 +3371,8 @@
       <div class="country-strip">
         <span class="country-strip-label">🌍 Select Country</span>
         <select class="country-select" id="country-select" onchange="onCountryChange(this.value)">
-          <option value="IN">🇮🇳 India</option>
-          <option value="US" selected>🇺🇸 United States</option>
+          <option value="IN" selected>🇮🇳 India</option>
+          <option value="US">🇺🇸 United States</option>
           <option value="GB">🇬🇧 United Kingdom</option>
           <option value="DE">🇩🇪 Germany</option>
           <option value="JP">🇯🇵 Japan</option>
@@ -3441,7 +3474,7 @@
           <div class="input-grid">
             <div class="field-group">
               <div class="field-label">👤 Current Age</div><input type="number" class="field-input" id="i-age"
-                value="25" min="16" max="60">
+                placeholder="e.g. 25" min="16" max="60">
             </div>
             <div class="field-group">
               <div class="field-label">🧠 Primary Skills</div><input type="text" class="field-input" id="i-skills"
@@ -3458,7 +3491,7 @@
             </div>
             <div class="field-group">
               <div class="field-label">💰 Income (local/yr)</div><input type="number" class="field-input" id="i-income"
-                value="45000" min="0" step="1000">
+                placeholder="e.g. 45000" min="0" step="1000">
             </div>
             <div class="field-group">
               <div class="field-label">📱 Daily Screen Time</div>
@@ -3537,7 +3570,7 @@
             </div>
             <div class="field-group">
               <div class="field-label">🎂 Retirement Age</div><input type="number" class="field-input" id="i-retire"
-                value="65" min="50" max="75">
+                placeholder="e.g. 65" min="50" max="75">
             </div>
           </div>
           <div class="input-footer">
@@ -3933,9 +3966,9 @@
     /* ── FALLBACK DATA ── */
     const FALLBACK_DATA = { US: { name: "United States", flag: "🇺🇸", currency: "USD", symbol: "$", inflation: 2.9, gdp: 2.8, salaryGrowth: 4.1, hdi: 0.927, exchangeRate: 1.0, avgSalary: 58000, careerMult: { tech: 1.42, business: 1.25, creative: 1.18, health: 1.35, finance: 1.38 } }, IN: { name: "India", flag: "🇮🇳", currency: "INR", symbol: "₹", inflation: 5.4, gdp: 6.1, salaryGrowth: 9.2, hdi: 0.644, exchangeRate: 83.5, avgSalary: 600000, careerMult: { tech: 1.55, business: 1.30, creative: 1.15, health: 1.28, finance: 1.40 } }, GB: { name: "United Kingdom", flag: "🇬🇧", currency: "GBP", symbol: "£", inflation: 3.2, gdp: 0.7, salaryGrowth: 5.8, hdi: 0.929, exchangeRate: 0.79, avgSalary: 38000, careerMult: { tech: 1.38, business: 1.22, creative: 1.20, health: 1.32, finance: 1.35 } }, DE: { name: "Germany", flag: "🇩🇪", currency: "EUR", symbol: "€", inflation: 2.2, gdp: 0.0, salaryGrowth: 4.4, hdi: 0.942, exchangeRate: 0.92, avgSalary: 50000, careerMult: { tech: 1.35, business: 1.20, creative: 1.15, health: 1.30, finance: 1.32 } }, JP: { name: "Japan", flag: "🇯🇵", currency: "JPY", symbol: "¥", inflation: 2.8, gdp: 1.1, salaryGrowth: 2.8, hdi: 0.920, exchangeRate: 149.5, avgSalary: 5500000, careerMult: { tech: 1.30, business: 1.18, creative: 1.12, health: 1.25, finance: 1.28 } }, CN: { name: "China", flag: "🇨🇳", currency: "CNY", symbol: "¥", inflation: 0.2, gdp: 4.6, salaryGrowth: 6.5, hdi: 0.788, exchangeRate: 7.24, avgSalary: 120000, careerMult: { tech: 1.48, business: 1.28, creative: 1.15, health: 1.22, finance: 1.38 } }, BR: { name: "Brazil", flag: "🇧🇷", currency: "BRL", symbol: "R$", inflation: 4.8, gdp: 2.9, salaryGrowth: 5.2, hdi: 0.760, exchangeRate: 4.97, avgSalary: 48000, careerMult: { tech: 1.42, business: 1.22, creative: 1.15, health: 1.25, finance: 1.30 } }, NG: { name: "Nigeria", flag: "🇳🇬", currency: "NGN", symbol: "₦", inflation: 28.9, gdp: 2.9, salaryGrowth: 12.0, hdi: 0.548, exchangeRate: 1500, avgSalary: 2400000, careerMult: { tech: 1.60, business: 1.30, creative: 1.18, health: 1.35, finance: 1.42 } }, ZA: { name: "South Africa", flag: "🇿🇦", currency: "ZAR", symbol: "R", inflation: 5.3, gdp: 0.6, salaryGrowth: 5.1, hdi: 0.717, exchangeRate: 18.8, avgSalary: 260000, careerMult: { tech: 1.45, business: 1.25, creative: 1.18, health: 1.30, finance: 1.35 } }, AU: { name: "Australia", flag: "🇦🇺", currency: "AUD", symbol: "A$", inflation: 4.1, gdp: 1.5, salaryGrowth: 4.6, hdi: 0.946, exchangeRate: 1.54, avgSalary: 90000, careerMult: { tech: 1.38, business: 1.22, creative: 1.18, health: 1.35, finance: 1.32 } }, CA: { name: "Canada", flag: "🇨🇦", currency: "CAD", symbol: "C$", inflation: 2.9, gdp: 1.1, salaryGrowth: 4.2, hdi: 0.935, exchangeRate: 1.36, avgSalary: 62000, careerMult: { tech: 1.40, business: 1.22, creative: 1.18, health: 1.33, finance: 1.35 } }, FR: { name: "France", flag: "🇫🇷", currency: "EUR", symbol: "€", inflation: 2.3, gdp: 0.9, salaryGrowth: 4.0, hdi: 0.910, exchangeRate: 0.92, avgSalary: 42000, careerMult: { tech: 1.33, business: 1.20, creative: 1.22, health: 1.28, finance: 1.30 } }, SG: { name: "Singapore", flag: "🇸🇬", currency: "SGD", symbol: "S$", inflation: 3.4, gdp: 2.8, salaryGrowth: 5.1, hdi: 0.939, exchangeRate: 1.34, avgSalary: 72000, careerMult: { tech: 1.45, business: 1.28, creative: 1.20, health: 1.32, finance: 1.40 } }, AE: { name: "UAE", flag: "🇦🇪", currency: "AED", symbol: "د.إ", inflation: 3.1, gdp: 3.4, salaryGrowth: 5.5, hdi: 0.911, exchangeRate: 3.67, avgSalary: 180000, careerMult: { tech: 1.42, business: 1.32, creative: 1.20, health: 1.28, finance: 1.40 } }, MX: { name: "Mexico", flag: "🇲🇽", currency: "MXN", symbol: "$", inflation: 4.9, gdp: 1.5, salaryGrowth: 6.8, hdi: 0.781, exchangeRate: 17.2, avgSalary: 200000, careerMult: { tech: 1.48, business: 1.25, creative: 1.18, health: 1.22, finance: 1.32 } }, KR: { name: "South Korea", flag: "🇰🇷", currency: "KRW", symbol: "₩", inflation: 3.6, gdp: 1.4, salaryGrowth: 3.5, hdi: 0.929, exchangeRate: 1325, avgSalary: 52000000, careerMult: { tech: 1.40, business: 1.22, creative: 1.18, health: 1.28, finance: 1.32 } }, PK: { name: "Pakistan", flag: "🇵🇰", currency: "PKR", symbol: "₨", inflation: 23.4, gdp: 2.4, salaryGrowth: 14.0, hdi: 0.544, exchangeRate: 278, avgSalary: 1200000, careerMult: { tech: 1.55, business: 1.28, creative: 1.15, health: 1.25, finance: 1.38 } }, ID: { name: "Indonesia", flag: "🇮🇩", currency: "IDR", symbol: "Rp", inflation: 2.8, gdp: 5.0, salaryGrowth: 7.2, hdi: 0.713, exchangeRate: 15700, avgSalary: 80000000, careerMult: { tech: 1.52, business: 1.28, creative: 1.18, health: 1.25, finance: 1.35 } }, TR: { name: "Turkey", flag: "🇹🇷", currency: "TRY", symbol: "₺", inflation: 43.2, gdp: 2.6, salaryGrowth: 48.0, hdi: 0.855, exchangeRate: 32.5, avgSalary: 400000, careerMult: { tech: 1.50, business: 1.28, creative: 1.20, health: 1.25, finance: 1.35 } }, AR: { name: "Argentina", flag: "🇦🇷", currency: "ARS", symbol: "$", inflation: 143.0, gdp: -2.5, salaryGrowth: 150.0, hdi: 0.849, exchangeRate: 990, avgSalary: 12000000, careerMult: { tech: 1.52, business: 1.25, creative: 1.18, health: 1.22, finance: 1.30 } } };
 
-    let ECON = { ...FALLBACK_DATA['US'], isLive: false };
+    let ECON = { ...FALLBACK_DATA['IN'], isLive: false };
     let CURRENCY_MODE = 'local';
-    let currentCountryCode = 'US';
+    let currentCountryCode = 'IN';
 
     /* ── SESSION / REGISTERED USER ──
        Reads the logged-in user saved by login.html after a successful
@@ -3966,7 +3999,7 @@
           navUserInfo.style.display = '';
         }
         if (navAuthBtn) {
-          navAuthBtn.textContent = '⏻ Log Out';
+          navAuthBtn.textContent = '🚪 Log Out';
           navAuthBtn.onclick = logoutUser;
         }
       }
@@ -4018,9 +4051,22 @@
     /* ── EXPORT PDF ── */
     function exportPDF() {
       if (!window.SIM) { showToast('⚠ Run a simulation first before exporting.', 'orange'); return; }
-      showToast('⬇ Opening print dialog for PDF export…', 'cyan');
-      setTimeout(() => window.print(), 400);
+      showToast('⬇ Preparing PDF…', 'cyan');
+      // Charts are drawn on <canvas> sized for the on-screen layout. The print
+      // stylesheet changes panel widths, so we re-render after a short delay
+      // to let print layout settle, then redraw charts against the new sizes
+      // right before the print dialog opens — otherwise charts can appear
+      // blank/invisible on the printed page.
+      setTimeout(() => {
+        renderResults(window.SIM);
+        requestAnimationFrame(() => window.print());
+      }, 600);
     }
+
+    window.addEventListener('afterprint', () => {
+      // Restore charts to the normal on-screen layout after printing/cancel.
+      if (window.SIM) renderResults(window.SIM);
+    });
 
     /* ── SHARE ── */
     function shareResults() {
@@ -4062,7 +4108,7 @@
     }
     window.addEventListener('DOMContentLoaded', () => {
       ['i-screen', 'i-learn', 'i-savings', 'i-network'].forEach(id => { const el = document.getElementById(id); if (el) { const p = (el.value - el.min) / (el.max - el.min) * 100; el.style.setProperty('--pct', p + '%'); } });
-      onCountryChange('US');
+      onCountryChange('IN');
       // Load URL params if shared
       const p = new URLSearchParams(window.location.search);
       if (p.get('age')) {
@@ -4077,14 +4123,18 @@
         ['i-screen', 'i-learn'].forEach(id => { const el = document.getElementById(id); if (el) { const pct = (el.value - el.min) / (el.max - el.min) * 100; el.style.setProperty('--pct', pct + '%'); } });
         document.getElementById('sv').textContent = document.getElementById('i-screen').value + 'h';
         document.getElementById('lv').textContent = document.getElementById('i-learn').value + 'h';
-        onCountryChange(p.get('country') || 'US');
+        onCountryChange(p.get('country') || 'IN');
         setTimeout(() => startSimulation(), 1500);
       }
+      ['i-age', 'i-income', 'i-retire'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', () => el.classList.remove('field-error'));
+      });
     });
 
     /* ── API FETCH ── */
     async function fetchCountryData(code) {
-      const fallback = FALLBACK_DATA[code] || FALLBACK_DATA['US'];
+      const fallback = FALLBACK_DATA[code] || FALLBACK_DATA['IN'];
       updateAPIStatus('loading');
       ECON = { ...fallback, isLive: false };
       updateEcoPanel(ECON);
@@ -4299,7 +4349,31 @@
     function fmtRaw(n) { return Math.round(CURRENCY_MODE === 'usd' ? n / ECON.exchangeRate : n); }
 
     /* ── SIMULATION ── */
+    function validateRequiredFields() {
+      const required = [
+        { id: 'i-age', min: 16, max: 60 },
+        { id: 'i-income', min: 0, max: Infinity },
+        { id: 'i-retire', min: 50, max: 75 }
+      ];
+      let firstInvalid = null;
+      required.forEach(f => {
+        const el = document.getElementById(f.id);
+        const raw = el.value.trim();
+        const val = parseInt(raw, 10);
+        const invalid = raw === '' || Number.isNaN(val) || val < f.min || val > f.max;
+        el.classList.toggle('field-error', invalid);
+        if (invalid && !firstInvalid) firstInvalid = el;
+      });
+      return firstInvalid;
+    }
+
     async function startSimulation() {
+      const firstInvalid = validateRequiredFields();
+      if (firstInvalid) {
+        firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        firstInvalid.focus();
+        return;
+      }
       playSound('start');
       const overlay = document.getElementById('sim-overlay'); overlay.classList.add('active');
       const country = FALLBACK_DATA[currentCountryCode];
@@ -4310,19 +4384,19 @@
       steps.forEach(s => setTimeout(() => { fill.style.width = s.p + '%'; if (lines[s.l]) lines[s.l].classList.add('show'); }, s.d));
       setTimeout(() => {
         overlay.classList.remove('active'); lines.forEach(l => l.classList.remove('show'));
-        const age = parseInt(document.getElementById('i-age').value) || 25;
+        const age = parseInt(document.getElementById('i-age').value, 10);
         const screen = parseInt(document.getElementById('i-screen').value) || 6;
         const learn = parseInt(document.getElementById('i-learn').value) || 1;
         const fitness = parseInt(document.getElementById('i-fitness').value) || 2;
         const sleep = parseInt(document.getElementById('i-sleep').value) || 2;
         const career = document.getElementById('i-career').value;
-        const income = parseInt(document.getElementById('i-income').value) || 45000;
+        const income = parseInt(document.getElementById('i-income').value, 10);
         const education = parseInt(document.getElementById('i-edu').value) || 2;
         const savingsRate = parseInt(document.getElementById('i-savings').value) || 15;
         const networking = parseInt(document.getElementById('i-network').value) || 2;
         const stress = parseInt(document.getElementById('i-stress').value) || 2;
         const riskTolerance = parseInt(document.getElementById('i-risk').value) || 2;
-        const retireAge = parseInt(document.getElementById('i-retire').value) || 65;
+        const retireAge = parseInt(document.getElementById('i-retire').value, 10);
         window.SIM = compute(age, screen, learn, fitness, sleep, career, income, education, savingsRate, networking, stress, riskTolerance, retireAge);
         renderResults(window.SIM); playSound('reveal');
       }, 2600);
@@ -4393,6 +4467,10 @@
       canvas.style.width = dw + 'px'; canvas.style.height = dh + 'px';
       const ctx = canvas.getContext('2d'); ctx.scale(dpr, dpr);
       const W = dw, H = dh, pad = { l: 58, r: 16, t: 16, b: 36 }, pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
+      const isPrint = window.matchMedia && window.matchMedia('print').matches;
+      const gridColor = isPrint ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.05)';
+      const labelColor = isPrint ? 'rgba(20,20,20,0.7)' : 'rgba(224,242,255,0.35)';
+      const labelColorX = isPrint ? 'rgba(20,20,20,0.65)' : 'rgba(224,242,255,0.3)';
       let allVals = datasets.flatMap(d => d.data);
       let minV = Math.min(...allVals) * 0.88, maxV = Math.max(...allVals) * 1.08;
       function getX(i, total) { return pad.l + (i / (total - 1)) * pw; }
@@ -4405,17 +4483,18 @@
       }
       function drawFrame(progress) {
         ctx.clearRect(0, 0, W, H);
+        if (isPrint) { ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H); }
         // Grid
         for (let i = 0; i <= 4; i++) {
           const y = pad.t + ph * (1 - i / 4);
-          ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + pw, y); ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth = 1; ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l + pw, y); ctx.strokeStyle = gridColor; ctx.lineWidth = 1; ctx.stroke();
           const val = minV + (maxV - minV) * (i / 4);
-          ctx.fillStyle = 'rgba(224,242,255,0.35)'; ctx.font = '9px JetBrains Mono';
+          ctx.fillStyle = labelColor; ctx.font = '9px JetBrains Mono';
           const lbl = val >= 1e9 ? '$' + (val / 1e9).toFixed(1) + 'B' : val >= 1e6 ? '$' + (val / 1e6).toFixed(1) + 'M' : val >= 1000 ? (opts.dollar ? '$' : '') + (val / 1000).toFixed(0) + 'k' : val.toFixed(0) + (opts.pct ? '%' : '');
           ctx.fillText(lbl, 4, y + 3.5);
         }
         // X axis labels
-        ctx.fillStyle = 'rgba(224,242,255,0.3)'; ctx.font = '9px JetBrains Mono';
+        ctx.fillStyle = labelColorX; ctx.font = '9px JetBrains Mono';
         labels.forEach((lbl, i) => { const x = getX(i, labels.length); ctx.fillText(lbl, x - ctx.measureText(lbl).width / 2, H - 6); });
         datasets.forEach(ds => {
           const n = ds.data.length, drawN = Math.max(2, Math.ceil(n * progress));
@@ -4430,9 +4509,13 @@
           ds.data.slice(0, drawN).forEach((v, i) => { if (i === 0 || i === drawN - 1 || i % 5 === 0) { const x = getX(i, n), y = getY(v); ctx.beginPath(); ctx.arc(x, y, 3.5, 0, Math.PI * 2); ctx.fillStyle = ds.color; ctx.shadowColor = ds.color; ctx.shadowBlur = 8; ctx.fill(); ctx.shadowBlur = 0; } });
         });
       }
-      const dur = 1400, st = performance.now();
-      function animate(now) { const p = Math.min((now - st) / dur, 1); drawFrame(1 - Math.pow(1 - p, 3)); if (p < 1) requestAnimationFrame(animate); }
-      requestAnimationFrame(animate);
+      if (isPrint) {
+        drawFrame(1);
+      } else {
+        const dur = 1400, st = performance.now();
+        function animate(now) { const p = Math.min((now - st) / dur, 1); drawFrame(1 - Math.pow(1 - p, 3)); if (p < 1) requestAnimationFrame(animate); }
+        requestAnimationFrame(animate);
+      }
 
       // TOOLTIP
       canvas.addEventListener('mousemove', ev => {
@@ -4674,7 +4757,7 @@
   async function saveSimulation() {
     try {
       const snap = {
-        country: typeof currentCountryCode !== 'undefined' ? currentCountryCode : 'US',
+        country: typeof currentCountryCode !== 'undefined' ? currentCountryCode : 'IN',
         econ: typeof ECON !== 'undefined' ? ECON : {},
         currency: typeof CURRENCY_MODE !== 'undefined' ? CURRENCY_MODE : 'local',
         savedAt: new Date().toISOString()
